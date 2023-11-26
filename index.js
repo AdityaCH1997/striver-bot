@@ -42,6 +42,7 @@ async function startBot() {
     
 	const page = new BasePage();
 	let site = "https://takeuforward.org/";
+    console.log('Welcome to the website takeuforward by Striver');
 
     let dynamicTitle1 = '';
     let dynamicTitle2 = 'Leetcode link';
