@@ -46,6 +46,9 @@ async function startBot() {
 
     let dynamicTitle1 = '';
     let dynamicTitle2 = 'Leetcode link';
+    const filePath1 = 'LeetCode_Practice_List.xlsx';
+    const filePath2 = 'LeetCode_Practice_List_random.xlsx';
+    const worksheetName1 = 'LeetCode and CodeStudio Links';
 
     await page.visit(site);      
     await page.sleep(1);
@@ -64,24 +67,44 @@ async function startBot() {
     await page.sleep(1);
 
     try {
-            await fetchTestLinks(page, dynamicTitle1, dynamicTitle2);
+            await fetchTestLinks(page, dynamicTitle1, dynamicTitle2, filePath1, worksheetName1);
             await new Promise((resolve) => setTimeout(resolve, 1000));
             await page.sleep(2);
-        
+            await convertBaseSheetToRandomOrder(filePath1, filePath2, page, worksheetName1);
     } catch(e) {
         console.error(e)
     }
         
 }
 
-async function fetchTestLinks(page, dynamicTitle1, dynamicTitle2) {
+async function convertBaseSheetToRandomOrder(filePath1, filePath2, page, worksheetName1) {
+    try {
+        const originalWorkbook = await page.fetchWorkbook(filePath1);
+
+        const originalWorksheet = originalWorkbook.getWorksheet(worksheetName1);
+
+        const dataArray = await page.worksheetToArray(originalWorksheet);
+
+        const sortedDataArray = await page.randomSort(dataArray);
+
+        const newWorkbook = await page.arrayToWorkbook(sortedDataArray);
+
+        await page.writeWorkbookToFile(newWorkbook, filePath2);
+    } catch(error) {
+        console.log('Sheet Conversion Error: ',error.message);
+        throw error;
+    }
+};
+
+async function fetchTestLinks(page, dynamicTitle1, dynamicTitle2, filePath, worksheetName) {
+    
     try {
 
         const dynamicPath1 = `.//td[@title="${dynamicTitle1}"]`;
         const dynamicPath2 = `.//td[@title="${dynamicTitle2}"]`;
  
         const workbook = new ExcelJS.Workbook();
-        const worksheet = workbook.addWorksheet('LeetCode and CodeStudio Links');
+        const worksheet = workbook.addWorksheet(worksheetName);
 
         let slNo = 1;
 
@@ -186,7 +209,7 @@ async function fetchTestLinks(page, dynamicTitle1, dynamicTitle2) {
                             else {
                                 worksheet.addRow({'Sl.No.': slNo++, 'Link': href2, 'topic': problemStatement});
                             }                         
-                            //count++;
+                            count++;
                         }
                         else if(href != null) {
                             try {
@@ -214,7 +237,7 @@ async function fetchTestLinks(page, dynamicTitle1, dynamicTitle2) {
                             catch {
                                 console.log('Error: ',error);
                             }
-                            //count++;
+                            count++;
                         }
                         else {
                             console.log('No Link clicked');
@@ -223,9 +246,9 @@ async function fetchTestLinks(page, dynamicTitle1, dynamicTitle2) {
                     else {
                         console.log('No anchor tag found ');
                     }
-                    /*if(count >= 5) {
+                    if(count >= 5) {
                         break;
-                    }*/
+                    }
                 }
             }
             else {
@@ -268,7 +291,7 @@ async function fetchTestLinks(page, dynamicTitle1, dynamicTitle2) {
                             
                             await page.sleep(1);
                             console.log('Clicked on LeetCode Link');
-                            //count++;
+                            count++;
                             //console.log('WorkSheet Row: ', worksheet.getRow());
                         }
                         else {
@@ -279,19 +302,19 @@ async function fetchTestLinks(page, dynamicTitle1, dynamicTitle2) {
                         console.log('No anchor tag found ');
                     }
 
-                    /*if(count >= 50) {
+                    if(count >= 5) {
                         break;
-                    }*/
+                    }
                 }
             }
         }
 
         //Check Sheet Values
         //console.log('WorkSheet Data: ', worksheet.getSheetValues());
-
         console.log('Writing to Excel Sheet');
         //Save Excel File
-        await workbook.xlsx.writeFile('LeetCode_Practice_List_8.xlsx');
+        await page.writeWorkbookToFile(workbook, filePath);
+        //await workbook.xlsx.writeFile(filePath);
 
         console.log('Saved Excel Sheet');
     } catch(error) {

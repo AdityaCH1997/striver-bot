@@ -128,6 +128,66 @@ const BasePage = function (customAudio = null) {
         
     }
 
+    this.fetchWorkbook = async function(filePath) {
+      const workbook = new ExcelJS.Workbook();
+
+      try {
+        await workbook.xlsx.readFile(filePath);
+        return workbook;
+      }
+      catch (error) {
+        console.log('Error reading workbook: ',error.message);
+        throw error;
+      }
+    }
+
+    this.worksheetToArray = async function(worksheet) {
+      const dataArray = [];
+
+      worksheet.eachRow((row, rowNumber) => {
+        const rowData = row.values;
+        //dataArray.push({ rowNumber, rowData });
+        dataArray.push(rowData);
+      });
+
+      return dataArray;
+    }
+
+    this.arrayToWorkbook = async function(array) {
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Converted WorkSheet');
+
+      for(const rowData of array) {
+        worksheet.addRow(rowData);
+      }
+
+      return workbook;
+    }
+
+    this.writeWorkbookToFile = async function(workbook, filePath) {
+      await workbook.xlsx.writeFile(filePath);
+    }
+
+    //Fisher-Yates shuffle modern algorithm
+    this.randomSort = async function(array) {
+      if(Array.isArray(array)) {
+        let temp = 0, pos = -1;
+        for(let i = array.length-1; i>0; i--) {
+          pos = Math.floor(Math.random() * (i+1));
+
+          //Business Logic
+          if(pos === 0) {
+            pos = 1;
+          }
+          //Swap
+          temp = array[pos];
+          array[pos] = array[i];
+          array[i] = temp;
+        }
+      }
+      return array;
+    }
+
   };
   
   module.exports = BasePage;
